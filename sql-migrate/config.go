@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -25,10 +24,18 @@ var dialects = map[string]gorp.Dialect{
 
 var ConfigFile string
 var ConfigEnvironment string
+var Dialect string
+var DataSource string
+var Dir string
+var Table string
 
 func ConfigFlags(f *flag.FlagSet) {
 	f.StringVar(&ConfigFile, "config", "dbconfig.yml", "Configuration file to use.")
 	f.StringVar(&ConfigEnvironment, "env", "development", "Environment to use.")
+	f.StringVar(&Dialect, "config.dialect", "", "Dialect to use.")
+	f.StringVar(&DataSource, "config.data_source", "", "Data source to use.")
+	f.StringVar(&Dir, "config.dir", "db/migrations", "Directory to use")
+	f.StringVar(&Table, "config.table", "", "Table to use")
 }
 
 type Environment struct {
@@ -54,23 +61,50 @@ func ReadConfig() (map[string]*Environment, error) {
 	return config, nil
 }
 
+func GetConfig() (string, map[string]*Environment, error) {
+	if CheckConfigParams() {
+		config := make(map[string]*Environment)
+		config[ConfigEnvironment] = &Environment{
+			Dialect:    Dialect,
+			DataSource: DataSource,
+			Dir:        Dir,
+			TableName:  Table,
+		}
+
+		return "config.X flags", config, nil
+	} else {
+		config, err := ReadConfig()
+		if err != nil {
+			return "yaml file", nil, err
+		}
+		return "yaml file", config, nil
+	}
+}
+
+func CheckConfigParams() bool {
+	if Dialect != "" || DataSource != "" || Table != "" {
+		return true
+	}
+	return false
+}
+
 func GetEnvironment() (*Environment, error) {
-	config, err := ReadConfig()
+	origin, config, err := GetConfig()
 	if err != nil {
 		return nil, err
 	}
 
 	env := config[ConfigEnvironment]
 	if env == nil {
-		return nil, errors.New("No environment: " + ConfigEnvironment)
+		return nil, fmt.Errorf("%s: No Environment: %s", origin, ConfigEnvironment)
 	}
 
 	if env.Dialect == "" {
-		return nil, errors.New("No dialect specified")
+		return nil, fmt.Errorf("%s: No dialect specified", origin)
 	}
 
 	if env.DataSource == "" {
-		return nil, errors.New("No data source specified")
+		return nil, fmt.Errorf("%s: No data source specified", origin)
 	}
 	env.DataSource = os.ExpandEnv(env.DataSource)
 

@@ -22,8 +22,13 @@ Usage: sql-migrate status [options] ...
 
 Options:
 
-  -config=dbconfig.yml   Configuration file to use.
-  -env="development"     Environment.
+-config=dbconfig.yml           Configuration file to use.
+-env="development"             Environment.
+
+-config.dialect="mysql"        Config param for dialect.
+-config.datasource="root:..."  Config param for datasource.
+-config.dir="db/migrations"    Config param for directory.
+-config.table="test_table"     Config param for table_name.
 
 `
 	return strings.TrimSpace(helpText)

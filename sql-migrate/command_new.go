@@ -33,9 +33,14 @@ Usage: sql-migrate new [options] name
 
 Options:
 
-  -config=dbconfig.yml   Configuration file to use.
-  -env="development"     Environment.
-  name                   The name of the migration
+	-config=dbconfig.yml           Configuration file to use.
+	-env="development"             Environment.
+
+	-config.dialect="mysql"        Config param for dialect.
+	-config.datasource="root:..."  Config param for datasource.
+	-config.dir="db/migrations"    Config param for directory.
+	-config.table="test_table"     Config param for table_name.
+  name                           The name of the migration
 `
 	return strings.TrimSpace(helpText)
 }
@@ -86,9 +91,9 @@ func CreateMigration(name string) error {
 	defer f.Close()
 
 	if err := tpl.Execute(f, nil); err != nil {
-		return err;
+		return err
 	}
 
 	ui.Output(fmt.Sprintf("Created migration %s", pathName))
-	return nil;
+	return nil
 }
