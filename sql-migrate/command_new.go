@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
+
+	migrate "github.com/rubenv/sql-migrate"
 )
 
 var templateContent = `
@@ -76,7 +79,25 @@ func CreateMigration(name string) error {
 		return err
 	}
 
-	fileName := fmt.Sprintf("%s-%s.sql", time.Now().Format("20060102150405"), strings.TrimSpace(name))
+	var tag string
+	switch env.Tag {
+	case "epoch":
+		tag = time.Now().Format("20060102150405")
+	case "count":
+		source := migrate.FileMigrationSource{
+			Dir: env.Dir,
+		}
+		migrationsCount, err := source.CountMigrations()
+		if err != nil {
+			return err
+		}
+		tag = strconv.Itoa(*migrationsCount + 1)
+	default:
+		tag = time.Now().Format("20060102150405")
+
+	}
+
+	fileName := fmt.Sprintf("%s-%s.sql", tag, strings.TrimSpace(name))
 	pathName := path.Join(env.Dir, fileName)
 	f, err := os.Create(pathName)
 
@@ -86,9 +107,9 @@ func CreateMigration(name string) error {
 	defer f.Close()
 
 	if err := tpl.Execute(f, nil); err != nil {
-		return err;
+		return err
 	}
 
 	ui.Output(fmt.Sprintf("Created migration %s", pathName))
-	return nil;
+	return nil
 }

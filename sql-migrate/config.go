@@ -31,12 +31,19 @@ func ConfigFlags(f *flag.FlagSet) {
 	f.StringVar(&ConfigEnvironment, "env", "development", "Environment to use.")
 }
 
+// epoch - default
+// iso for ISO-8601 datestamp
+// counter which increments count of current folder listing
+// none
+//
+
 type Environment struct {
 	Dialect    string `yaml:"dialect"`
 	DataSource string `yaml:"datasource"`
 	Dir        string `yaml:"dir"`
 	TableName  string `yaml:"table"`
 	SchemaName string `yaml:"schema"`
+	Tag        string `yaml:"tag"`
 }
 
 func ReadConfig() (map[string]*Environment, error) {
@@ -84,6 +91,10 @@ func GetEnvironment() (*Environment, error) {
 
 	if env.SchemaName != "" {
 		migrate.SetSchema(env.SchemaName)
+	}
+
+	if env.Tag == "" {
+		env.Tag = "epoch"
 	}
 
 	return env, nil
